@@ -1,0 +1,94 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Unified Lending Interface (ULI) Data",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "borrower": {
+        "type": "object",
+        "properties": {
+          "borrowerId":{
+            "type":"string",
+            "description": "Unique identifier for the borrower"
+          },
+          "firstName": { "type": "string" },
+          "lastName": { "type": "string" },
+          "address": { "type": "string" },
+          "contactNumber": { "type": "string" },
+          "panNumber": { "type": "string" },
+          "aadhaarNumber": { "type": "string" },
+          "income": { "type": "number" },
+          "creditScore": { "type": "integer" }
+        },
+        "required": [
+          "borrowerId",
+          "firstName",
+          "lastName",
+          "address",
+          "contactNumber",
+          "panNumber"
+        ]
+      },
+      "loanApplications": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "applicationId": { "type": "string" },
+            "loanType": { "type": "string", "enum": ["personal", "home", "vehicle", "business"] },
+            "loanAmount": { "type": "number" },
+            "loanTenure": { "type": "integer", "description": "Tenure in months" },
+            "interestRate": { "type": "number" },
+            "loanPurpose": { "type": "string" },
+            "lender":{
+                "type":"object",
+                "properties":{
+                    "lenderId": {"type":"string"},
+                    "lenderName": {"type":"string"},
+                    "lenderType": {"type":"string", "enum":["Bank","NBFC","Fintech"]}
+                },
+                "required":["lenderId","lenderName","lenderType"]
+            },
+            "applicationStatus": { "type": "string", "enum": ["pending", "approved", "rejected", "disbursed"] },
+            "disbursementDate": { "type": "string", "format": "date" },
+            "disbursementAmount": { "type": "number" },
+            "repaymentSchedule":{
+                "type":"array",
+                "items":{
+                    "type":"object",
+                    "properties":{
+                        "dueDate": {"type":"string", "format":"date"},
+                        "amountDue": {"type":"number"},
+                        "status":{"type":"string", "enum":["pending","paid"]}
+                    },
+                    "required":["dueDate","amountDue","status"]
+                }
+            },
+            "repaymentHistory":{
+                "type":"array",
+                "items":{
+                    "type":"object",
+                    "properties":{
+                        "paymentDate": {"type":"string","format":"date"},
+                        "paymentAmount": {"type":"number"}
+                    },
+                    "required":["paymentDate","paymentAmount"]
+                }
+            }
+          },
+          "required": [
+            "applicationId",
+            "loanType",
+            "loanAmount",
+            "loanTenure",
+            "interestRate",
+            "applicationStatus",
+            "lender"
+          ]
+        }
+      }
+    },
+    "required": ["borrower", "loanApplications"]
+  }
+}

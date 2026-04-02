@@ -1,0 +1,172 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Borrower Financial Profile",
+  "type": "object",
+  "properties": {
+    "borrowerId": { "type": "string", "description": "Unique identifier for the borrower" },
+    "personalDetails": {
+      "type": "object",
+      "properties": {
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "dateOfBirth": { "type": "string", "format": "date" },
+        "gender": { "type": "string", "enum": ["male", "female", "other"] },
+        "maritalStatus": { "type": "string", "enum": ["single", "married", "divorced", "widowed"] },
+        "address": { "type": "string" },
+        "contactNumber": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "panNumber": { "type": "string" },
+        "aadhaarNumber": { "type": "string" }
+      },
+      "required": [
+        "firstName",
+        "lastName",
+        "dateOfBirth",
+        "address",
+        "contactNumber",
+        "panNumber"
+      ]
+    },
+    "incomeDetails": {
+      "type": "object",
+      "properties": {
+        "employmentType": { "type": "string", "enum": ["salaried", "self-employed", "business", "retired"] },
+        "monthlyIncome": { "type": "number" },
+        "annualIncome": { "type": "number" },
+        "incomeSources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "source": { "type": "string" },
+              "amount": { "type": "number" },
+              "frequency": { "type": "string", "enum": ["monthly", "annual", "one-time"] }
+            },
+            "required": ["source", "amount", "frequency"]
+          }
+        },
+        "proofOfIncome": {
+            "type":"array",
+            "items":{"type":"string"}
+        }
+      },
+      "required": ["employmentType", "monthlyIncome"]
+    },
+    "financialAssets": {
+      "type": "object",
+      "properties": {
+        "bankAccounts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "bankName": { "type": "string" },
+              "accountNumber": { "type": "string" },
+              "accountType": { "type": "string", "enum": ["savings", "current", "fixed deposit"] },
+              "currentBalance": { "type": "number" }
+            },
+            "required": ["bankName", "accountNumber", "accountType", "currentBalance"]
+          }
+        },
+        "investments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "investmentType": { "type": "string", "enum": ["stocks", "bonds", "mutual funds", "real estate", "gold"] },
+              "value": { "type": "number" },
+              "description": { "type": "string" }
+            },
+            "required": ["investmentType", "value"]
+          }
+        }
+      }
+    },
+    "physicalAssets": {
+      "type": "object",
+      "properties": {
+        "realEstate": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "address": { "type": "string" },
+              "marketValue": { "type": "number" },
+              "ownershipType": { "type": "string", "enum": ["owned", "mortgaged"] }
+            },
+            "required": ["address", "marketValue", "ownershipType"]
+          }
+        },
+        "vehicles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "make": { "type": "string" },
+              "model": { "type": "string" },
+              "year": { "type": "integer" },
+              "estimatedValue": { "type": "number" }
+            },
+            "required": ["make", "model", "year", "estimatedValue"]
+          }
+        },
+        "otherAssets":{
+            "type":"array",
+            "items":{
+                "type":"object",
+                "properties":{
+                    "assetType":{"type":"string"},
+                    "assetValue":{"type":"number"},
+                    "description":{"type":"string"}
+                },
+                "required":["assetType","assetValue"]
+            }
+        }
+      }
+    },
+    "creditHistory": {
+      "type": "object",
+      "properties": {
+        "creditScore": { "type": "integer" },
+        "loanHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "loanType": { "type": "string" },
+              "amount": { "type": "number" },
+              "status": { "type": "string", "enum": ["active", "paid", "defaulted"] },
+              "lender": { "type": "string" }
+            },
+            "required": ["loanType", "amount", "status", "lender"]
+          }
+        },
+        "creditReports":{
+            "type":"array",
+            "items":{"type":"string"}
+        }
+      }
+    },
+    "liabilities":{
+        "type":"object",
+        "properties":{
+            "loans":{
+                "type":"array",
+                "items":{
+                    "type":"object",
+                    "properties":{
+                        "loanType":{"type":"string"},
+                        "outstandingAmount":{"type":"number"},
+                        "monthlyPayment":{"type":"number"},
+                        "lender":{"type":"string"}
+                    },
+                    "required":["loanType","outstandingAmount","monthlyPayment","lender"]
+                }
+            },
+            "creditCardDebt":{"type":"number"},
+            "otherDebts":{"type":"number"}
+        }
+    }
+  },
+  "required": ["borrowerId", "personalDetails", "incomeDetails"]
+}
