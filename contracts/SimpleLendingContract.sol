@@ -18,10 +18,14 @@ contract SimpleLendingContract {
         uint interestRate; // in percentage
         LoanState state;
         uint requestedDate;
+        address fundedBy; // Track who funded this loan
     }
 
     // Mapping to store loans by borrower address
     mapping(address => Loan) public loans;
+
+    // Mapping to track each lender's balance in the pool
+    mapping(address => uint) public lenderBalances;
 
     // Variable to store the available balance in the contract
     uint public availableBalance;
@@ -29,6 +33,18 @@ contract SimpleLendingContract {
     // Function to add funds to the contract
     function addFunds() public payable {
         availableBalance = availableBalance.add(msg.value);
+        lenderBalances[msg.sender] = lenderBalances[msg.sender].add(msg.value);
+    }
+
+    // Function for lenders to withdraw their money
+    function withdrawFunds(uint amount) public {
+        require(amount <= lenderBalances[msg.sender], "Insufficient balance to withdraw");
+        require(amount <= availableBalance, "Insufficient pool liquidity");
+
+        lenderBalances[msg.sender] = lenderBalances[msg.sender].sub(amount);
+        availableBalance = availableBalance.sub(amount);
+        
+        payable(msg.sender).transfer(amount);
     }
 
     // Function to request a loan
@@ -63,7 +79,8 @@ contract SimpleLendingContract {
             repayAmount: repayAmount,
             interestRate: 2,
             state: LoanState.Requested,
-            requestedDate: block.timestamp
+            requestedDate: block.timestamp,
+            fundedBy: address(0) // Not funded yet
         });
 
         // Auto fund the loan if enough balance
@@ -73,6 +90,7 @@ contract SimpleLendingContract {
 
             // Update state
             loans[msg.sender].state = LoanState.Funded;
+            loans[msg.sender].fundedBy = address(this); // Funded by the general pool
 
             // Reduce from pool
             availableBalance = availableBalance.sub(amount);
@@ -92,7 +110,8 @@ contract SimpleLendingContract {
             repayAmount: loan.repayAmount,
             interestRate: loan.interestRate,
             state: loan.state,
-            requestedDate: loan.requestedDate
+            requestedDate: loan.requestedDate,
+            fundedBy: loan.fundedBy
         });
     }
 
@@ -112,6 +131,7 @@ contract SimpleLendingContract {
 
         // Update loan state to funded
         loan.state = LoanState.Funded;
+        loan.fundedBy = msg.sender; // Mark this lender as the funder
 
         // Deduct the funded amount from available balance
         availableBalance = availableBalance.sub(loan.requestedAmount);
@@ -134,8 +154,13 @@ contract SimpleLendingContract {
         // Check if the repayment amount is sufficient
         require(msg.value == loan.repayAmount, "Incorrect repayment amount");
 
-        //Return msg.value to contract
-        addFunds();
+        // Return money to the pool
+        availableBalance = availableBalance.add(msg.value);
+
+        // If it was funded by a specific lender, credit them with the repayment + interest
+        if (loan.fundedBy != address(0) && loan.fundedBy != address(this)) {
+            lenderBalances[loan.fundedBy] = lenderBalances[loan.fundedBy].add(msg.value);
+        }
 
         // Update loan state to repaid
         loan.state = LoanState.Repaid;

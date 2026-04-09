@@ -10,7 +10,7 @@
   "sourceMap": "65:742:0:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;",
   "deployedSourceMap": "65:742:0:-:0;;;;;;;;",
   "source": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.19;\r\n\r\n\r\n\r\nlibrary SafeMath {\r\n    function mul(uint256 a, uint256 b) internal pure returns (uint256) {\r\n        if (a == 0) {\r\n            return 0;\r\n        }\r\n        uint256 c = a * b;\r\n        assert(c / a == b);\r\n        return c;\r\n    }\r\n\r\n    function div(uint256 a, uint256 b) internal pure returns (uint256) {\r\n        //there is no case where this function can overflow/underflow\r\n        uint256 c = a / b;\r\n        return c;\r\n    }\r\n    \r\n    \r\n    function sub(uint256 a, uint256 b) internal pure returns (uint256) {\r\n        assert(b <= a);\r\n        return a - b;\r\n    }\r\n    \r\n    \r\n    function add(uint256 a, uint256 b) internal pure returns (uint256) {\r\n        uint256 c = a + b;\r\n        assert(c >= a);\r\n        return c;\r\n    }\r\n}\r\n",
-  "sourcePath": "D:\\Shashwat\\Projects\\playground\\Decentralized-Lending-System-DApp\\contracts\\SafeMath.sol",
+  "sourcePath": "C:\\Users\\khali\\OneDrive\\Desktop\\Projects\\Decentralized ULI\\Bc-Ca3\\decentralized-uli\\contracts\\SafeMath.sol",
   "ast": {
     "absolutePath": "project:/contracts/SafeMath.sol",
     "exportedSymbols": {
@@ -1227,7 +1227,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.16",
-  "updatedAt": "2025-04-14T18:19:44.165Z",
+  "updatedAt": "2026-04-06T14:00:55.650Z",
   "devdoc": {
     "kind": "dev",
     "methods": {},

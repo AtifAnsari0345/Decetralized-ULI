@@ -4,6 +4,7 @@ import LendingSystem from "./contracts/SimpleLendingContract.json"; // Import th
 
 function LenderPage({ setMessage, lenderAddress }) {
   const [poolBalance, setPoolBalance] = useState(0);
+  const [lenderPoolBalance, setLenderPoolBalance] = useState(0);
   const [selectedAction, setSelectedAction] = useState("addFunds");
   const [lenderWalletBalance, setLenderWalletBalance] = useState("");
   const [contract, setContract] = useState(null);
@@ -48,6 +49,13 @@ function LenderPage({ setMessage, lenderAddress }) {
         const balanceEth = web3.utils.fromWei(balanceWei, "ether");
         setPoolBalance(balanceEth);
 
+        // Fetch the lender's balance in the pool (Principal + Interest)
+        const lenderPoolBalanceWei = await contractInstance.methods
+          .lenderBalances(lenderAddress)
+          .call();
+        const lenderPoolBalanceEth = web3.utils.fromWei(lenderPoolBalanceWei, "ether");
+        setLenderPoolBalance(lenderPoolBalanceEth);
+
         // Fetch the lender's wallet balance
         console.log("Fetching wallet balance for address:", lenderAddress);
         const walletBalanceWei = await web3.eth.getBalance(lenderAddress);
@@ -71,10 +79,12 @@ function LenderPage({ setMessage, lenderAddress }) {
         });
         setMessage(`${amount} Ether added to the pool.`);
 
-        // Update the pool balance
+        // Update balances
         const balanceWei = await contract.methods.getContractBalance().call();
-        const balanceEth = Web3.utils.fromWei(balanceWei, "ether");
-        setPoolBalance(balanceEth);
+        setPoolBalance(Web3.utils.fromWei(balanceWei, "ether"));
+
+        const lenderPoolBalanceWei = await contract.methods.lenderBalances(lenderAddress).call();
+        setLenderPoolBalance(Web3.utils.fromWei(lenderPoolBalanceWei, "ether"));
       } catch (error) {
         console.error("Error adding funds:", error);
         setMessage("Error adding funds.");
@@ -100,15 +110,40 @@ function LenderPage({ setMessage, lenderAddress }) {
     }
   };
 
+  const handleWithdrawFunds = async (amount) => {
+    if (contract && lenderAddress) {
+      try {
+        await contract.methods.withdrawFunds(Web3.utils.toWei(amount, "ether")).send({
+          from: lenderAddress,
+        });
+        setMessage(`${amount} Ether withdrawn from the pool.`);
+
+        // Update balances
+        const balanceWei = await contract.methods.getContractBalance().call();
+        setPoolBalance(Web3.utils.fromWei(balanceWei, "ether"));
+
+        const lenderPoolBalanceWei = await contract.methods.lenderBalances(lenderAddress).call();
+        setLenderPoolBalance(Web3.utils.fromWei(lenderPoolBalanceWei, "ether"));
+      } catch (error) {
+        console.error("Error withdrawing funds:", error);
+        setMessage("Error withdrawing funds.");
+      }
+    } else {
+      setMessage("Lender address or contract not available.");
+    }
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
     const action = selectedAction;
-    const amount = event.target.elements.addFundsAmount?.value;
+    const amount = event.target.elements.lenderAmount?.value;
     const fundBorrowerAddress =
       event.target.elements.fundBorrowerAddress?.value;
 
     if (action === "addFunds" && amount) {
       handleAddFunds(amount);
+    } else if (action === "withdrawFunds" && amount) {
+      handleWithdrawFunds(amount);
     } else if (action === "fundLoan" && fundBorrowerAddress) {
       handleFundLoan(fundBorrowerAddress);
     }
@@ -148,6 +183,12 @@ function LenderPage({ setMessage, lenderAddress }) {
             {poolBalance ? `${poolBalance} Ether` : "N/A"}
           </span>
         </p>
+        <p className="text-gray-600">
+          Your Withdrawable Balance:{" "}
+          <span className="font-bold text-green-600">
+            {lenderPoolBalance ? `${lenderPoolBalance} Ether` : "0 Ether"}
+          </span>
+        </p>
       </div>
 
       <div className="bg-white rounded-md shadow-sm p-4">
@@ -165,19 +206,20 @@ function LenderPage({ setMessage, lenderAddress }) {
                 onChange={handleActionChange}
               >
                 <option value="addFunds">Add Funds to Pool</option>
+                <option value="withdrawFunds">Withdraw Funds from Pool</option>
                 <option value="fundLoan">Fund Loan to Borrower</option>
               </select>
             </label>
           </div>
 
-          {selectedAction === "addFunds" && (
-            <div id="addFundsInput">
+          {(selectedAction === "addFunds" || selectedAction === "withdrawFunds") && (
+            <div id="lenderAmountInput">
               <label className="block text-gray-700 text-sm font-bold mb-2">
-                Amount to Add (Ether):
+                Amount (Ether):
                 <input
                   type="number"
                   step="any"
-                  name="addFundsAmount"
+                  name="lenderAmount"
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 />
               </label>
