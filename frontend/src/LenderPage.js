@@ -94,22 +94,6 @@ function LenderPage({ setMessage, lenderAddress }) {
     }
   };
 
-  const handleFundLoan = async (borrowerAddressToFund) => {
-    if (contract && lenderAddress) {
-      try {
-        await contract.methods
-          .fundLoan(borrowerAddressToFund)
-          .send({ from: lenderAddress });
-        setMessage(`Loan funded for address: ${borrowerAddressToFund}`);
-      } catch (error) {
-        console.error("Error funding loan:", error);
-        setMessage("Error funding loan.");
-      }
-    } else {
-      setMessage("Lender address or contract not available.");
-    }
-  };
-
   const handleWithdrawFunds = async (amount) => {
     if (contract && lenderAddress) {
       try {
@@ -137,15 +121,11 @@ function LenderPage({ setMessage, lenderAddress }) {
     event.preventDefault();
     const action = selectedAction;
     const amount = event.target.elements.lenderAmount?.value;
-    const fundBorrowerAddress =
-      event.target.elements.fundBorrowerAddress?.value;
 
     if (action === "addFunds" && amount) {
       handleAddFunds(amount);
     } else if (action === "withdrawFunds" && amount) {
       handleWithdrawFunds(amount);
-    } else if (action === "fundLoan" && fundBorrowerAddress) {
-      handleFundLoan(fundBorrowerAddress);
     }
   };
 
@@ -207,7 +187,6 @@ function LenderPage({ setMessage, lenderAddress }) {
               >
                 <option value="addFunds">Add Funds to Pool</option>
                 <option value="withdrawFunds">Withdraw Funds from Pool</option>
-                <option value="fundLoan">Fund Loan to Borrower</option>
               </select>
             </label>
           </div>

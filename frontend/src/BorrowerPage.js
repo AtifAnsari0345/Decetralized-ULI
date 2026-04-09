@@ -13,6 +13,7 @@ function BorrowerPage({ state, setMessage, borrowerAddress }) {
   const [selectedAction, setSelectedAction] = useState("requestLoan");
   const [repayAmount, setRepayAmount] = useState("");
   const [borrowerBalance, setBorrowerBalance] = useState("");
+  const [loanDetails, setLoanDetails] = useState(null);
 
   useEffect(() => {
     async function fetchBorrowerBalance() {
@@ -125,13 +126,21 @@ function BorrowerPage({ state, setMessage, borrowerAddress }) {
   const handleViewLoanStatus = async () => {
     if (state.contract && borrowerAddress) {
       try {
-        const loanDetails = await state.contract.methods
+        const details = await state.contract.methods
           .getLoanDetails(borrowerAddress)
           .call();
-        console.log("Loan Details:", loanDetails);
-        setMessage(
-          `Loan details viewed in the console for user: ${borrowerId}`
-        );
+        
+        const statusMap = ["None", "Requested", "Funded", "Repaid", "Defaulted"];
+        const formattedDetails = {
+          requestedAmount: state.web3.utils.fromWei(details.requestedAmount, "ether"),
+          repayAmount: state.web3.utils.fromWei(details.repayAmount, "ether"),
+          interestRate: details.interestRate,
+          state: statusMap[details.state],
+          requestedDate: new Date(details.requestedDate * 1000).toLocaleString()
+        };
+        
+        setLoanDetails(formattedDetails);
+        setMessage(`Loan status updated for borrower.`);
       } catch (error) {
         console.error("Error viewing loan status:", error);
         setMessage("Error viewing loan status.");
@@ -280,6 +289,15 @@ function BorrowerPage({ state, setMessage, borrowerAddress }) {
         <h2 className="text-lg font-semibold mb-2 text-gray-700">
           Borrower Actions
         </h2>
+        {loanDetails && (
+          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+            <h3 className="font-bold text-blue-800 mb-2 underline">Current Loan Status:</h3>
+            <p><strong>Status:</strong> <span className={`font-bold ${loanDetails.state === 'Funded' ? 'text-green-600' : 'text-blue-600'}`}>{loanDetails.state}</span></p>
+            <p><strong>Amount:</strong> {loanDetails.requestedAmount} ETH</p>
+            <p><strong>To Repay:</strong> {loanDetails.repayAmount} ETH</p>
+            <p><strong>Date:</strong> {loanDetails.requestedDate}</p>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-gray-700 text-sm font-bold mb-2">

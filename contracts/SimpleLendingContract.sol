@@ -8,7 +8,7 @@ contract SimpleLendingContract {
     using SafeMath for uint;
 
     // Enum to represent the state of the loan
-    enum LoanState { Requested, Funded, Repaid, Defaulted }
+    enum LoanState { None, Requested, Funded, Repaid, Defaulted }
 
     // Struct to represent the loan details
     struct Loan {
@@ -18,7 +18,6 @@ contract SimpleLendingContract {
         uint interestRate; // in percentage
         LoanState state;
         uint requestedDate;
-        address fundedBy; // Track who funded this loan
     }
 
     // Mapping to store loans by borrower address
@@ -48,26 +47,9 @@ contract SimpleLendingContract {
     }
 
     // Function to request a loan
-    // function requestLoan(uint amount) public {
-    //     require(amount > 0, "Loan amount must be greater than 0");
-
-    //     // Calculate repay amount based on the loan details
-    //     uint repayAmount = calculateRepayAmount(amount);
-
-    //     // Create a new loan
-    //     loans[msg.sender] = Loan({
-    //         borrower: msg.sender,
-    //         requestedAmount: amount,
-    //         repayAmount: repayAmount,
-    //         interestRate: 2,
-    //         state: LoanState.Requested,
-    //         requestedDate: block.timestamp
-    //     });
-    // }
-
     function requestLoan(uint amount) public {
         require(amount > 0, "Loan amount must be greater than 0");
-        require(loans[msg.sender].state == LoanState(0), "Previous loan must be closed"); // Optional: restrict multiple loans
+        require(loans[msg.sender].state != LoanState.Requested && loans[msg.sender].state != LoanState.Funded, "Previous loan must be closed");
 
         // Calculate repay amount
         uint repayAmount = calculateRepayAmount(amount);
@@ -79,8 +61,7 @@ contract SimpleLendingContract {
             repayAmount: repayAmount,
             interestRate: 2,
             state: LoanState.Requested,
-            requestedDate: block.timestamp,
-            fundedBy: address(0) // Not funded yet
+            requestedDate: block.timestamp
         });
 
         // Auto fund the loan if enough balance
@@ -90,16 +71,11 @@ contract SimpleLendingContract {
 
             // Update state
             loans[msg.sender].state = LoanState.Funded;
-            loans[msg.sender].fundedBy = address(this); // Funded by the general pool
 
             // Reduce from pool
             availableBalance = availableBalance.sub(amount);
         }
     }
-
-
-
-
 
     // Function to get loan details in a more readable format
     function getLoanDetails(address borrower) external view returns (Loan memory) {
@@ -110,31 +86,8 @@ contract SimpleLendingContract {
             repayAmount: loan.repayAmount,
             interestRate: loan.interestRate,
             state: loan.state,
-            requestedDate: loan.requestedDate,
-            fundedBy: loan.fundedBy
+            requestedDate: loan.requestedDate
         });
-    }
-
-    // Function to fund a loan
-    function fundLoan(address borrower) public {
-        // Get the loan details
-        Loan storage loan = loans[borrower];
-
-        // Check if the loan is in the requested state
-        require(loan.state == LoanState.Requested, "Loan is not in the requested state");
-
-        // Check if there are sufficient funds to fund the loan
-        require(availableBalance >= loan.requestedAmount, "Insufficient funds to fund the loan");
-
-        // Transfer funds from contract to borrower
-        payable(loan.borrower).transfer(loan.requestedAmount);
-
-        // Update loan state to funded
-        loan.state = LoanState.Funded;
-        loan.fundedBy = msg.sender; // Mark this lender as the funder
-
-        // Deduct the funded amount from available balance
-        availableBalance = availableBalance.sub(loan.requestedAmount);
     }
 
     // Function to get the repay amount for a loan
@@ -156,11 +109,6 @@ contract SimpleLendingContract {
 
         // Return money to the pool
         availableBalance = availableBalance.add(msg.value);
-
-        // If it was funded by a specific lender, credit them with the repayment + interest
-        if (loan.fundedBy != address(0) && loan.fundedBy != address(this)) {
-            lenderBalances[loan.fundedBy] = lenderBalances[loan.fundedBy].add(msg.value);
-        }
 
         // Update loan state to repaid
         loan.state = LoanState.Repaid;
